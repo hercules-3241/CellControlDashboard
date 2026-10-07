@@ -5,6 +5,7 @@ import Celulares from '../views/Celulares.vue';
 import Regiones from '../views/Regiones.vue';
 import ReportesRotura from '../views/ReportesRotura.vue';
 import Lineas from '../views/Lineas.vue';
+import Roturas from '../views/Roturas.vue';
 
 const routes = [
   {
@@ -30,6 +31,11 @@ const routes = [
     path: '/regiones',
     name: 'Regiones',
     component: Regiones
+  },
+  {
+    path: '/roturas',
+    name: 'Roturas',
+    component: Roturas
   },
   {
     path: '/reportes-rotura',
