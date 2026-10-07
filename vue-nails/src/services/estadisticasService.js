@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { API_HOST } from './config';
+import { installAuth, setCredentials, clearAuth as clearStoredAuth } from './auth';
 
 // Configuración de la API base
 const API_BASE_URL = `${API_HOST}/api/estadisticas`;
@@ -13,27 +14,7 @@ const apiClient = axios.create({
   timeout: 10000, // 10 segundos de timeout
 });
 
-// Interceptor para agregar token de autenticación si existe
-apiClient.interceptors.request.use(
-  (config) => {
-    const token = localStorage.getItem('auth_token');
-    const username = localStorage.getItem('auth_username');
-    const password = localStorage.getItem('auth_password');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (username && password) {
-      // Autenticación Basic
-      const credentials = btoa(`${username}:${password}`);
-      config.headers.Authorization = `Basic ${credentials}`;
-    }
-
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+installAuth(apiClient);
 
 // Interceptor para manejo de errores
 apiClient.interceptors.response.use(
@@ -129,17 +110,7 @@ export default {
       }
     })();
 
-    return axios.create({
-      baseURL: origin,
-      timeout: 10000,
-    }).get('/api/celulares', {
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': localStorage.getItem('auth_username') && localStorage.getItem('auth_password')
-          ? `Basic ${btoa(`${localStorage.getItem('auth_username')}:${localStorage.getItem('auth_password')}`)}`
-          : apiClient.defaults.headers.Authorization || ''
-      }
-    });
+    return apiClient.get('/api/celulares', { baseURL: origin });
   },
 
   /**
@@ -168,22 +139,14 @@ export default {
    * @param {string} password - Contraseña
    */
   setBasicAuth(username, password) {
-    if (username && password) {
-      localStorage.setItem('auth_username', username);
-      localStorage.setItem('auth_password', password);
-    } else {
-      localStorage.removeItem('auth_username');
-      localStorage.removeItem('auth_password');
-    }
+    setCredentials(username, password);
   },
 
   /**
    * Limpiar autenticación
    */
   clearAuth() {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_username');
-    localStorage.removeItem('auth_password');
+    clearStoredAuth();
   },
 
   /**
