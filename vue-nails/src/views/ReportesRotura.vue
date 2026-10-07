@@ -284,6 +284,7 @@
 import { ref, computed, onMounted, watch } from 'vue';
 import lineasService from '../services/lineasService';
 import { exportToExcel } from '../utils/exportExcel';
+import { separarMotivo } from '../utils/solicitudes';
 
 const loading = ref(false);
 const error = ref(null);
@@ -434,16 +435,20 @@ const cargarDatos = async () => {
 const exportarExcel = () => {
   if (solicitudesFiltradas.value.length === 0) return;
 
-  const datos = solicitudesFiltradas.value.map(s => ({
-    'Fecha': formatearFecha(s.fecha),
-    'Solicitante': s.nomSolicitante,
-    'Usuario': s.usuario,
-    'Tipo': formatearTipo(s.tipoSolicitud),
-    'Motivo': s.motivo,
-    'Región': formatearRegion(s.region),
-    'Estado': s.estado,
-    'Necesita Línea': s.necesitaLinea ? 'Sí' : 'No'
-  }));
+  const datos = solicitudesFiltradas.value.map(s => {
+    const { motivo, observacion } = separarMotivo(s);
+    return {
+      'Fecha': formatearFecha(s.fecha),
+      'Solicitante': s.nomSolicitante,
+      'Usuario': s.usuario,
+      'Tipo': formatearTipo(s.tipoSolicitud),
+      'Motivo': motivo,
+      'Observación': observacion,
+      'Región': formatearRegion(s.region),
+      'Estado': s.estado,
+      'Necesita Línea': s.necesitaLinea ? 'Sí' : 'No'
+    };
+  });
 
   exportToExcel({
     filename: 'solicitudes.xlsx',
