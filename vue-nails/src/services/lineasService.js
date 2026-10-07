@@ -23,8 +23,19 @@ export default {
   /**
    * Obtener todos los movimientos
    */
-  obtenerMovimientos() {
-    return apiClient.get('/api/movimientos');
+  async obtenerMovimientos() {
+    // The endpoint returns a Spring page (20 items by default): walk every page so views see the full history.
+    const size = 500;
+    const primera = await apiClient.get('/api/movimientos', { params: { page: 0, size } });
+    const pagina = primera.data;
+    if (!Array.isArray(pagina?.content)) return primera;
+
+    const content = [...pagina.content];
+    for (let page = 1; page < pagina.totalPages; page++) {
+      const { data } = await apiClient.get('/api/movimientos', { params: { page, size } });
+      content.push(...data.content);
+    }
+    return { ...primera, data: { ...pagina, content } };
   },
 
   /**
