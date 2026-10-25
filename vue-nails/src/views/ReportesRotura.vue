@@ -154,6 +154,7 @@
               <tr>
                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">#</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Fecha</th>
+                <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Incidencia</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Solicitante</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Tipo</th>
                 <th class="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">Región</th>
@@ -177,6 +178,9 @@
                     </svg>
                     <span class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ formatearFecha(sol.fecha) }}</span>
                   </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                  {{ sol.fechaIncidencia ? formatearFecha(sol.fechaIncidencia) : '—' }}
                 </td>
                 <td class="px-6 py-4">
                   <div class="text-sm">
@@ -439,6 +443,7 @@ const exportarExcel = () => {
     const { motivo, observacion } = separarMotivo(s);
     return {
       'Fecha': formatearFecha(s.fecha),
+      'Fecha incidencia': s.fechaIncidencia ? formatearFecha(s.fechaIncidencia) : '',
       'Solicitante': s.nomSolicitante,
       'Usuario': s.usuario,
       'Tipo': formatearTipo(s.tipoSolicitud),
