@@ -151,3 +151,26 @@ test('categoriaDe returns the motivo category or a fallback for free text', () =
   assert.equal(categoriaDe({ motivo: 'NO PRENDE' }), 'NO PRENDE');
   assert.equal(categoriaDe({ motivo: 'se le cayo al piso' }), 'SIN CATEGORÍA');
 });
+
+test('the incident date wins over the load date when present', () => {
+  const roturas = [
+    rotura('8', '2026-09-30', { fechaIncidencia: '2026-09-20' }),
+    rotura('8', '2026-09-10'),
+    rotura('8', '2026-09-12', { fechaIncidencia: '2026-08-25' }),
+  ];
+
+  const [r] = rankingReincidentes(roturas, [], HOY);
+  assert.deepEqual(r.roturas.map(x => x.fecha), ['2026-08-25', '2026-09-10', '2026-09-20']);
+  assert.deepEqual(r.diasEntre, [16, 10]);
+  assert.equal(r.ultimaFecha, '2026-09-20');
+  assert.equal(r.roturas[2].fechaCarga, '2026-09-30');
+
+  const k = kpisRoturas(roturas, HOY);
+  assert.equal(k.ultimos30, 2);
+  assert.equal(k.previos30, 1);
+
+  const t = tendenciaMensual(roturas, HOY, 6, categoriaDe);
+  assert.deepEqual(t.map(m => [m.mes, m.total]), [
+    ['2026-05', 0], ['2026-06', 0], ['2026-07', 0], ['2026-08', 1], ['2026-09', 2], ['2026-10', 0],
+  ]);
+});

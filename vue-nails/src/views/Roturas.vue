@@ -254,6 +254,7 @@
                           <span class="absolute -left-[7px] mt-1.5 w-3 h-3 rounded-full bg-red-500 ring-4 ring-white dark:ring-gray-900"></span>
                           <div class="flex flex-wrap items-center gap-2 text-xs">
                             <span class="font-bold text-gray-900 dark:text-gray-100 tabular-nums">{{ formatearFecha(x.fecha) }}</span>
+                            <span v-if="x.fechaCarga !== x.fecha" class="text-gray-500 dark:text-gray-400">(cargada el {{ formatearFecha(x.fechaCarga) }})</span>
                             <span v-if="i > 0" class="text-gray-500 dark:text-gray-400">{{ r.diasEntre[i - 1] }} días después</span>
                             <span class="px-2 py-0.5 rounded bg-gray-200 dark:bg-gray-800 font-semibold text-gray-700 dark:text-gray-300">{{ x.motivo || 'Sin motivo' }}</span>
                             <span v-if="x.posibleDuplicado" class="px-2 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 font-semibold">Posible duplicado</span>

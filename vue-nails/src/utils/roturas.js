@@ -11,6 +11,9 @@ const diaDe = (fecha) => Date.parse(`${fecha}T00:00:00Z`) / DIA_MS;
 const diaHoy = (hoy) => Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()) / DIA_MS;
 const diasEntre = (desde, hasta) => Math.round(diaDe(hasta) - diaDe(desde));
 
+// Older requests only have the load date; newer ones also say when the phone actually broke.
+const fechaRotura = (s) => s.fechaIncidencia || s.fecha;
+
 const mediana = (valores) => {
   if (valores.length === 0) return null;
   const ordenados = [...valores].sort((a, b) => a - b);
@@ -46,7 +49,7 @@ function agruparPorReparto(roturas) {
     if (!grupos.has(clave)) grupos.set(clave, []);
     grupos.get(clave).push(s);
   }
-  for (const lista of grupos.values()) lista.sort((a, b) => a.fecha.localeCompare(b.fecha));
+  for (const lista of grupos.values()) lista.sort((a, b) => fechaRotura(a).localeCompare(fechaRotura(b)));
   return grupos;
 }
 
@@ -62,8 +65,8 @@ export function rankingReincidentes(roturas, usuarios, hoy) {
   for (const [clave, lista] of agruparPorReparto(roturas)) {
     if (lista.length < 2) continue;
 
-    const gaps = lista.slice(1).map((s, i) => diasEntre(lista[i].fecha, s.fecha));
-    const ultimos90 = lista.filter(s => hoyDia - diaDe(s.fecha) < VENTANA_RIESGO_DIAS).length;
+    const gaps = lista.slice(1).map((s, i) => diasEntre(fechaRotura(lista[i]), fechaRotura(s)));
+    const ultimos90 = lista.filter(s => hoyDia - diaDe(fechaRotura(s)) < VENTANA_RIESGO_DIAS).length;
     const usuario = usuariosPorClave.get(clave);
     const nivel = ultimos90 >= 2 ? 'alto' : lista.length >= 3 ? 'medio' : 'bajo';
 
@@ -77,12 +80,13 @@ export function rankingReincidentes(roturas, usuarios, hoy) {
       diasEntre: gaps,
       minDias: Math.min(...gaps),
       promedioDias: Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length),
-      ultimaFecha: lista.at(-1).fecha,
+      ultimaFecha: fechaRotura(lista.at(-1)),
       ultimos90,
       nivel,
       roturas: lista.map((s, i) => ({
         ...separarMotivo(s),
-        fecha: s.fecha,
+        fecha: fechaRotura(s),
+        fechaCarga: s.fecha,
         estado: s.estado,
         solicitante: s.nomSolicitante,
         posibleDuplicado: i > 0 && gaps[i - 1] <= DIAS_POSIBLE_DUPLICADO,
@@ -98,10 +102,10 @@ export function rankingReincidentes(roturas, usuarios, hoy) {
 
 export function kpisRoturas(roturas, hoy) {
   const hoyDia = diaHoy(hoy);
-  const antiguedad = (s) => hoyDia - diaDe(s.fecha);
+  const antiguedad = (s) => hoyDia - diaDe(fechaRotura(s));
   const grupos = [...agruparPorReparto(roturas).values()];
   const reincidentes = grupos.filter(g => g.length > 1);
-  const gaps = reincidentes.flatMap(g => g.slice(1).map((s, i) => diasEntre(g[i].fecha, s.fecha)));
+  const gaps = reincidentes.flatMap(g => g.slice(1).map((s, i) => diasEntre(fechaRotura(g[i]), fechaRotura(s))));
   const roturasReincidentes = reincidentes.reduce((n, g) => n + g.length, 0);
 
   return {
@@ -129,7 +133,7 @@ export function tendenciaMensual(roturas, hoy, meses, claveFn) {
     resultado.push(fila);
   }
   for (const s of roturas) {
-    const fila = indice.get(s.fecha.slice(0, 7));
+    const fila = indice.get(fechaRotura(s).slice(0, 7));
     if (!fila) continue;
     const clave = claveFn(s) || 'SIN DATO';
     fila.total++;
